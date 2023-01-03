@@ -1,0 +1,25 @@
+pipeline{
+    agent any
+    environment {
+        PATH = "/opt/maven/apache-maven-3.8.7/bin:$PATH"
+    }
+    stages {
+        stage("git clone code"){
+            steps{
+                git credentialsId: 'git_credentials', url: 'https://github.com/NAVEEN0069/hello-world.git'
+            }
+        }    
+        stage("build code"){
+            steps{
+                sh "mvn clean install"
+            }    
+        } 
+        stage("Deploy"){
+            steps{
+                sshagent(['deploy_user']) {
+                   sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/Test_project/webapp/target/webapp.war ec2-user@54.151.34.168:/opt/apache-tomcat-8.5.84/webapps"
+                }
+            }
+        }
+    }
+}
