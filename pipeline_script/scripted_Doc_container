@@ -1,0 +1,24 @@
+node{
+    def buildNumber = BUILD_NUMBER
+    stage("Git clone"){
+        git url: 'https://github.com/NAVEEN0069/my-app1.git', branch: 'master'
+    }
+    stage("Build Docker Image"){
+       sh "docker build -t naveen0069/newapp:${buildNumber} ."  
+    }
+    stage("Docker login and push"){
+        withCredentials([usernamePassword(credentialsId: 'docker_pwd', passwordVariable: 'pass_docker', usernameVariable: 'user_docker')]) {
+            sh "docker login -u naveen0069 -p ${pass_docker}" 
+            
+        }
+    stage("Docker push"){
+        sh "docker push naveen0069/newapp:${buildNumber}"
+    }
+    stage(" Deploy application in docker container")
+    sshagent(['deploy_user']) {
+     sh "ssh -o StrictHostkeyChecking=no ec2-user@54.193.118.131 docker rm -f new || true "
+     sh "ssh -o StrictHostkeyChecking=no ec2-user@54.193.118.131 docker run -itd --name new -p 9090:8080 naveen0069/newapp:${buildNumber}"
+   }
+}
+}
+
